@@ -5,62 +5,90 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Device Records</title>
     <script>
-  async function fetchRecords() {
-    const sheetUrl = "https://script.google.com/macros/s/AKfycbwhppZVaLS1ZryOcqXo63BcaSgzAL4SMZ4nAxaYbcSTkaM2JKD6xxaJ6p2AqrcDUaA/exec";
-    let statusElement = document.getElementById("statusMessage");
+        async function fetchRecords() {
+            const sheetUrl = "https://script.google.com/macros/s/AKfycbwhppZVaLS1ZryOcqXo63BcaSgzAL4SMZ4nAxaYbcSTkaM2JKD6xxaJ6p2AqrcDUaA/exec";
+            let statusElement = document.getElementById("statusMessage");
 
-    statusElement.innerText = "Fetching data...";
-    statusElement.style.color = "blue";
+            statusElement.innerText = "Fetching data...";
+            statusElement.style.color = "blue";
 
-    try {
-        let response = await fetch(sheetUrl);
+            try {
+                let response = await fetch(sheetUrl);
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                let data = await response.json();
+                console.log("Fetched data:", data); // ✅ Debugging log
+
+                let tableBody = document.getElementById("recordsTableBody");
+                tableBody.innerHTML = ""; // ✅ Clear previous data
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    statusElement.innerText = "No data found.";
+                    statusElement.style.color = "red";
+                    return;
+                }
+
+                data.forEach(entry => {
+                    let row = tableBody.insertRow();
+
+                    // ✅ Data from Google Sheets
+                    row.insertCell(0).innerText = entry["OS"] || "N/A";
+                    row.insertCell(1).innerText = entry["OS Version"] || "N/A";
+                    row.insertCell(2).innerText = entry["Asset ID"] || "N/A";
+                    row.insertCell(3).innerText = entry["Device Name"] || "N/A";  
+                    row.insertCell(4).innerText = entry["Last Updated"] || "N/A";  
+
+                    // ✅ Extra Details (Fetched from the browser, NOT stored in Sheets)
+                    row.insertCell(5).innerText = getBrowserName(); // ✅ Detect Browser Name
+                    row.insertCell(6).innerText = getDeviceType();  // ✅ Detect Mobile/Desktop
+                    row.insertCell(7).innerText = `${window.screen.width} × ${window.screen.height}`; // ✅ Screen Resolution
+                    row.insertCell(8).innerText = navigator.userAgentData?.architecture || "Unknown"; // ✅ CPU Architecture
+                    row.insertCell(9).innerText = navigator.deviceMemory || "Unknown"; // ✅ RAM (GB)
+                    row.insertCell(10).innerText = navigator.hardwareConcurrency || "Unknown"; // ✅ CPU Cores
+                    row.insertCell(11).innerText = ("ontouchstart" in window) ? "Yes" : "No"; // ✅ Touch Support
+                });
+
+                statusElement.innerText = "Data loaded successfully.";
+                statusElement.style.color = "green";
+            } catch (error) {
+                console.error("Fetch error:", error);
+                statusElement.innerText = "Error loading data: " + error.message;
+                statusElement.style.color = "red";
+            }
         }
 
-        let data = await response.json();
-        console.log("Fetched data:", data); // Debugging log
-
-        let tableBody = document.getElementById("recordsTableBody");
-        tableBody.innerHTML = ""; // Clear previous data
-
-        if (!Array.isArray(data) || data.length === 0) {
-            statusElement.innerText = "No data found.";
-            statusElement.style.color = "red";
-            return;
+        // ✅ Function to detect browser name
+        function getBrowserName() {
+            let userAgent = navigator.userAgent;
+            if (userAgent.includes("Chrome")) return "Chrome";
+            if (userAgent.includes("Firefox")) return "Firefox";
+            if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) return "Safari";
+            if (userAgent.includes("Edge")) return "Edge";
+            if (userAgent.includes("Opera") || userAgent.includes("OPR")) return "Opera";
+            return "Unknown";
         }
 
-        data.forEach(entry => {
-            let row = tableBody.insertRow();
+        // ✅ Function to detect device type (Mobile, Tablet, Desktop)
+        function getDeviceType() {
+            if (navigator.userAgentData?.mobile) return "Mobile";
+            let width = window.screen.width;
+            return width <= 768 ? "Tablet" : "Desktop";
+        }
 
-            row.insertCell(0).innerText = entry["OS"] || "N/A";
-            row.insertCell(1).innerText = entry["OS Version"] || "N/A";
-            row.insertCell(2).innerText = entry["Asset ID"] || "N/A";
-		row.insertCell(3).innerText = entry["Device Name"] || "N/A";  // ✅ New Field for Device Name
-		row.insertCell(4).innerText = entry["Last Updated"] || "N/A";  // ✅ New Column for Last Updated
-            
-        });
-
-        statusElement.innerText = "Data loaded successfully.";
-        statusElement.style.color = "green";
-    } catch (error) {
-        console.error("Fetch error:", error);
-        statusElement.innerText = "Error loading data: " + error.message;
-        statusElement.style.color = "red";
-    }
-}
         function filterTable() {
             let inputValues = [];
             let table = document.getElementById("recordsTable");
             let rows = table.getElementsByTagName("tr");
 
-            // Get input field values
+            // ✅ Get input field values for filtering
             document.querySelectorAll(".filter-input").forEach((input, index) => {
                 inputValues[index] = input.value.toLowerCase();
             });
 
-            // Loop through table rows and hide those that don't match the filters
+            // ✅ Loop through table rows and hide those that don't match the filters
             for (let i = 2; i < rows.length; i++) { // Start from 2 to skip headers & filter row
                 let cells = rows[i].getElementsByTagName("td");
                 let rowVisible = true;
@@ -76,30 +104,31 @@
             }
         }
 
+        // ✅ Load records on page load
         window.onload = fetchRecords;
-		function exportToExcel() {
-    let table = document.querySelector("table"); // Select the table
-    let rows = table.querySelectorAll("tr");
-    let csvContent = [];
 
-    rows.forEach(row => {
-        let cols = row.querySelectorAll("th, td");
-        let rowData = [];
+        function exportToExcel() {
+            let table = document.querySelector("table"); // ✅ Select the table
+            let rows = table.querySelectorAll("tr");
+            let csvContent = [];
 
-        cols.forEach(col => {
-            rowData.push(col.innerText);
-        });
+            rows.forEach(row => {
+                let cols = row.querySelectorAll("th, td");
+                let rowData = [];
 
-        csvContent.push(rowData.join(",")); // Convert to CSV format
-    });
+                cols.forEach(col => {
+                    rowData.push(col.innerText);
+                });
 
-    let csvBlob = new Blob([csvContent.join("\n")], { type: "text/csv" });
-    let link = document.createElement("a");
-    link.href = URL.createObjectURL(csvBlob);
-    link.download = "Device_Records.csv"; // File name
-    link.click();
-}
+                csvContent.push(rowData.join(",")); // ✅ Convert to CSV format
+            });
 
+            let csvBlob = new Blob([csvContent.join("\n")], { type: "text/csv" });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(csvBlob);
+            link.download = "Device_Records.csv"; // ✅ File name
+            link.click();
+        }
     </script>
     <style>
         table {
@@ -122,45 +151,42 @@
     </style>
 </head>
 <body>
+
 <button onclick="exportToExcel()">Export to Excel</button>
 
-    <h1>Device Records</h1>
-    <p id="statusMessage">Fetching data...</p>
+<h1>Device Records</h1>
+<p id="statusMessage">Fetching data...</p>
 
-    <table id="recordsTable">
-        <thead>
-            <tr>
-
-                <th>Platform</th>
-                <th>OS Version</th>
-                <th>Asset ID</th>
-			 <th>Device Name</th>  
-			 <th>Last Updated</th>  
-		     <th>Browser</th>   <!-- ✅ New Column -->
+<table id="recordsTable">
+    <thead>
+        <tr>
+            <th>Platform</th>
+            <th>OS Version</th>
+            <th>Asset ID</th>
+            <th>Device Name</th>  
+            <th>Last Updated</th>  
+            <th>Browser</th>   <!-- ✅ New Column -->
             <th>Device Type</th> <!-- ✅ New Column -->
             <th>Screen Resolution</th> <!-- ✅ New Column -->
             <th>CPU Arch</th> <!-- ✅ New Column -->
             <th>RAM (GB)</th> <!-- ✅ New Column -->
             <th>CPU Cores</th> <!-- ✅ New Column -->
             <th>Touch Support</th> <!-- ✅ New Column -->
+        </tr>
+        <tr>
+            <th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search OS"></th>
+            <th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search OS Version"></th>
+            <th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search Asset ID"></th>
+            <th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search Device Name"></th>
+        </tr>
+    </thead>
+    <tbody id="recordsTableBody">
+        <!-- ✅ Data will be inserted here dynamically -->
+    </tbody>
+</table>
 
-              
-            </tr>
-            <tr>
-            
-                <th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search OS"></th>
-                <th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search OS Version"></th>
-                <th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search Asset ID"></th>
-				<th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search Device Name"></th>
-                
-            </tr>
-        </thead>
-        <tbody id="recordsTableBody">
-            <!-- Data will be inserted here dynamically -->
-        </tbody>
-    </table>
-    
-    <br>
-    <a href="index.html">Go Back</a>
+<br>
+<a href="index.html">Go Back</a>
+
 </body>
 </html>
