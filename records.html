@@ -41,14 +41,6 @@
                     row.insertCell(3).innerText = entry["Device Name"] || "N/A";  
                     row.insertCell(4).innerText = entry["Last Updated"] || "N/A";  
 
-                    // ✅ Extra Details (Fetched from the browser, NOT stored in Sheets)
-                    row.insertCell(5).innerText = getBrowserName(); // ✅ Detect Browser Name
-                    row.insertCell(6).innerText = getDeviceType();  // ✅ Detect Mobile/Desktop
-                    row.insertCell(7).innerText = `${window.screen.width} × ${window.screen.height}`; // ✅ Screen Resolution
-                    row.insertCell(8).innerText = navigator.userAgentData?.architecture || "Unknown"; // ✅ CPU Architecture
-                    row.insertCell(9).innerText = navigator.deviceMemory || "Unknown"; // ✅ RAM (GB)
-                    row.insertCell(10).innerText = navigator.hardwareConcurrency || "Unknown"; // ✅ CPU Cores
-                    row.insertCell(11).innerText = ("ontouchstart" in window) ? "Yes" : "No"; // ✅ Touch Support
                 });
 
                 statusElement.innerText = "Data loaded successfully.";
@@ -165,13 +157,7 @@
             <th>Asset ID</th>
             <th>Device Name</th>  
             <th>Last Updated</th>  
-            <th>Browser</th>   <!-- ✅ New Column -->
-            <th>Device Type</th> <!-- ✅ New Column -->
-            <th>Screen Resolution</th> <!-- ✅ New Column -->
-            <th>CPU Arch</th> <!-- ✅ New Column -->
-            <th>RAM (GB)</th> <!-- ✅ New Column -->
-            <th>CPU Cores</th> <!-- ✅ New Column -->
-            <th>Touch Support</th> <!-- ✅ New Column -->
+        
         </tr>
         <tr>
             <th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search OS"></th>
