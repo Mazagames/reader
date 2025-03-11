@@ -38,6 +38,7 @@
             row.insertCell(1).innerText = entry["OS Version"] || "N/A";
             row.insertCell(2).innerText = entry["Asset ID"] || "N/A";
 		row.insertCell(3).innerText = entry["Device Name"] || "N/A";  // ✅ New Field for Device Name
+		row.insertCell(4).innerText = entry["Last Updated"] || "N/A";  // ✅ New Column for Last Updated
             
         });
 
@@ -133,7 +134,8 @@
                 <th>OS</th>
                 <th>OS Version</th>
                 <th>Asset ID</th>
-			 <th>Device Name</th>  <!-- ✅ New Column for Device Name -->
+			 <th>Device Name</th>  
+			 <th>Last Updated</th>  
 
               
             </tr>
