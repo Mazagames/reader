@@ -6,7 +6,7 @@
     <title>Device Records</title>
     <script>
   async function fetchRecords() {
-    const sheetUrl = "https://script.google.com/macros/s/AKfycbz7nkObmLwT_yXfuMc_EGzWSntZSU2oF7-ZBEeHiRtaCw-55xHnEyuehQsblhzlGpQ/exec";
+    const sheetUrl = "https://script.google.com/macros/s/AKfycbwhppZVaLS1ZryOcqXo63BcaSgzAL4SMZ4nAxaYbcSTkaM2JKD6xxaJ6p2AqrcDUaA/exec";
     let statusElement = document.getElementById("statusMessage");
 
     statusElement.innerText = "Fetching data...";
@@ -37,7 +37,8 @@
             row.insertCell(0).innerText = entry["OS"] || "N/A";
             row.insertCell(1).innerText = entry["OS Version"] || "N/A";
             row.insertCell(2).innerText = entry["Asset ID"] || "N/A";
-            // Removed Project Name column
+		row.insertCell(3).innerText = entry["Device Name"] || "N/A";  // ✅ New Field for Device Name
+            
         });
 
         statusElement.innerText = "Data loaded successfully.";
@@ -132,6 +133,8 @@
                 <th>OS</th>
                 <th>OS Version</th>
                 <th>Asset ID</th>
+			 <th>Device Name</th>  <!-- ✅ New Column for Device Name -->
+
               
             </tr>
             <tr>
@@ -139,6 +142,7 @@
                 <th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search OS"></th>
                 <th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search OS Version"></th>
                 <th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search Asset ID"></th>
+				<th><input type="text" class="filter-input" onkeyup="filterTable()" placeholder="Search Device Name"></th>
                 
             </tr>
         </thead>
