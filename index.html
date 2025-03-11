@@ -7,28 +7,46 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
-        function getOSInfo() {
-            let userAgent = navigator.userAgent;
-            let os = "Unknown";
-            let osVersion = "Unknown";
-            let deviceID = userAgent; // Use User-Agent as a unique identifier
+     async function getOSInfo() {
+    let userAgent = navigator.userAgent;
+    let os = "Unknown";
+    let osVersion = "Unknown";
+    let deviceID = userAgent; // Using User-Agent as a unique identifier
 
-            if (/Windows NT ([\d.]+)/.test(userAgent)) {
-                os = "Windows";
-                osVersion = RegExp.$1;
-            } else if (/Mac OS X ([\d_]+)/.test(userAgent)) {
-                os = "MacOS";
-                osVersion = RegExp.$1.replace(/_/g, '.');
-            } else if (/Android ([\d.]+)/.test(userAgent)) {
-                os = "Android";
-                osVersion = RegExp.$1;
-            } else if (/CPU iPhone OS ([\d_]+)/.test(userAgent)) {
-                os = "iOS";
-                osVersion = RegExp.$1.replace(/_/g, '.');
+    console.log("User-Agent:", userAgent);
+
+    if (/Windows NT ([\d.]+)/.test(userAgent)) {
+        os = "Windows";
+        osVersion = RegExp.$1;
+    } else if (/Mac OS X ([\d_]+)/.test(userAgent)) {
+        os = "MacOS";
+        osVersion = RegExp.$1.replace(/_/g, '.');
+    } else if (/Android ([\d.]+)/.test(userAgent)) {
+        os = "Android";
+        osVersion = RegExp.$1;
+
+        console.log("Detected Android version from User-Agent:", osVersion);
+
+        // Check if navigator.userAgentData is available (for newer Chrome versions)
+        if (navigator.userAgentData) {
+            try {
+                let uaData = await navigator.userAgentData.getHighEntropyValues(["platformVersion"]);
+                osVersion = uaData.platformVersion; // More accurate Android version
+                console.log("More accurate Android version from userAgentData:", osVersion);
+            } catch (error) {
+                console.log("Error fetching platformVersion:", error);
             }
-
-            return { os, osVersion, deviceID };
         }
+    } else if (/CPU iPhone OS ([\d_]+)/.test(userAgent)) {
+        os = "iOS";
+        osVersion = RegExp.$1.replace(/_/g, '.');
+    }
+
+    console.log("Final OS Info:", { os, osVersion, deviceID });
+
+    return { os, osVersion, deviceID };
+}
+
 
         function handleGoogleLogin(response) {
             const userData = JSON.parse(atob(response.credential.split('.')[1]));
@@ -47,26 +65,27 @@
             }
         }
 
-     async function sendOSInfo() {
-    let data = getOSInfo();
-    let assetID = document.getElementById("deviceName").value.trim(); 
-  
+    async function sendOSInfo() {
+    let data = await getOSInfo();  // ✅ Wait for OS data
+    let assetID = document.getElementById("assetID").value.trim();
+    let deviceName = document.getElementById("enterDeviceName").value.trim();
 
-    if (!assetID) assetID = "Unknown";  
-   
+    if (!assetID) assetID = "Unknown";
+    if (!deviceName) deviceName = "Unknown";
 
     let statusElement = document.getElementById("statusMessage");
     statusElement.innerText = "Sending OS info...";
     statusElement.style.color = "blue";
 
-    localStorage.setItem("deviceName", assetID); // Save locally
+    localStorage.setItem("assetID", assetID);
+    localStorage.setItem("deviceName", deviceName);
 
     console.log("Detected OS:", data);
-    console.log("Asset ID:", assetID);  // Debugging
- 
+    console.log("Asset ID:", assetID);
+    console.log("Device Name:", deviceName);
 
     try {
-        let response = await fetch("https://script.google.com/macros/s/AKfycbzrgSwD__hZwEMZ_RkEvcYPaCRqpO4dAs_KXzdqsQGa0Vwkx-A1jmCFy2RQR8j0eLY/exec", {
+        let response = await fetch("https://script.google.com/macros/s/AKfycbxTr3rIzOaSmmpvrlSbSjdwQiJ29l-bMVu8mpYyCw4sIu5qKLCdluJz222OrUpARHo/exec", {
             method: "POST",
             mode: "no-cors",
             headers: { "Content-Type": "application/json" },
@@ -74,8 +93,8 @@
                 os: data.os, 
                 osVersion: data.osVersion, 
                 deviceID: data.deviceID,
-                assetID: assetID, // Corrected field name
-               
+                assetID: assetID,
+                deviceName: deviceName
             })
         });
 
@@ -87,11 +106,21 @@
     }
 }
 
-        window.onload = () => {
-            let data = getOSInfo();
-            document.getElementById("osInfo").innerText = `OS: ${data.os} ${data.osVersion}`;
-            loadDeviceName();
-        }
+
+
+      function loadStoredData() {
+    let storedAssetID = localStorage.getItem("assetID");
+    let storedDeviceName = localStorage.getItem("deviceName");
+
+    if (storedAssetID) document.getElementById("assetID").value = storedAssetID;
+    if (storedDeviceName) document.getElementById("enterDeviceName").value = storedDeviceName;
+}
+
+window.onload = async () => {
+    let data = await getOSInfo();  // Wait for the async function to return data
+    document.getElementById("osInfo").innerText = `OS: ${data.os} ${data.osVersion}`;
+    loadDeviceName();
+};
     </script>
 </head>
 <body>
@@ -99,15 +128,18 @@
 
     <h1>OS Tracker</h1>
     <p id="osInfo">Detecting OS...</p>
-    <label for="deviceName">Asset id:</label>
-    <input type="text" id="deviceName" placeholder="Enter device name" oninput="saveDeviceName()">
+ <label for="assetID">Asset ID:</label>
+<input type="text" id="assetID" placeholder="Enter asset ID" oninput="saveAssetID()">
+
+<label for="enterDeviceName">Device Name:</label>
+<input type="text" id="enterDeviceName" placeholder="Enter device name" oninput="saveDeviceName()">
+
     <p id="statusMessage"></p>
     <div id="g_id_onload"
          data-client_id="YOUR_GOOGLE_CLIENT_ID"
          data-callback="handleGoogleLogin"
          data-auto_prompt="false">
     </div>
-
     <button onclick="sendOSInfo()">Send OS Info</button>
     <script>
         if ('serviceWorker' in navigator) {
