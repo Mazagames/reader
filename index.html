@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
-    async function getOSInfo() {
+  async function getOSInfo() {
     let userAgent = navigator.userAgent;
     let os = "Unknown";
     let osVersion = "Unknown";
@@ -20,11 +20,13 @@
         osVersion = RegExp.$1;
     } else if (/Mac OS X ([\d_]+)/.test(userAgent)) {
         // Check if it's an iPad running in desktop mode
-        if (/iPad/.test(userAgent) || ('ontouchend' in document)) {
+        if (/iPad|Macintosh/.test(userAgent) && 'ontouchend' in document) {
             os = "iPadOS";
-            let match = userAgent.match(/Version\/([\d.]+)/); // Extracting iPadOS version
+            let match = userAgent.match(/Version\/([\d.]+)/); // Extract iPadOS version
             if (match) {
                 osVersion = match[1];
+            } else {
+                osVersion = "Unknown (iPadOS)"; // Fallback for older iPad versions
             }
         } else {
             os = "MacOS";
@@ -56,6 +58,16 @@
     return { os, osVersion, deviceID };
 }
 
+ // ✅ Function to Get IST Time
+    function getISTTime() {
+        let now = new Date();
+        let istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC +5:30
+        let istTime = new Date(now.getTime() + istOffset);
+        return istTime.toISOString().replace("T", " ").substring(0, 19); // Format: YYYY-MM-DD HH:MM:SS
+    }
+
+
+        
         function handleGoogleLogin(response) {
             const userData = JSON.parse(atob(response.credential.split('.')[1]));
             document.getElementById("userInfo").innerText = `User: ${userData.name}\nEmail: ${userData.email}`;
@@ -77,6 +89,7 @@
     let data = await getOSInfo();  // ✅ Wait for OS data
     let assetID = document.getElementById("assetID").value.trim();
     let deviceName = document.getElementById("enterDeviceName").value.trim();
+        let timestamp = getISTTime(); // ✅ Convert time to IST
 
     if (!assetID) assetID = "Unknown";
     if (!deviceName) deviceName = "Unknown";
@@ -102,7 +115,9 @@
                 osVersion: data.osVersion, 
                 deviceID: data.deviceID,
                 assetID: assetID,
-                deviceName: deviceName
+                deviceName: deviceName,
+                  timestamp: timestamp // ✅ Send IST time
+                
             })
         });
 
